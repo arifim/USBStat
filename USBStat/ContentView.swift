@@ -23,7 +23,6 @@ struct ContentView: View {
                         Divider()
                     }
                 }
-                
             } else {
                 Spacer()
                 VStack {
@@ -32,18 +31,16 @@ struct ContentView: View {
                         title: "No USB Devices",
                         description: "Connect a USB device to see its details here."
                     )
-                        
                 }
                 Spacer()
-                
             }
             Spacer()
             Divider()
             footer
                 .padding(.vertical, 12)
         }
-        
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        
     }
     
     var header: some View {

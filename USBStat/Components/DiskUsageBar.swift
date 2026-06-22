@@ -34,7 +34,7 @@ struct DiskUsageBar: View {
                     }
                 }
                 Button{
-                    NSWorkspace.shared.open(URL(fileURLWithPath: volume.mountPath))
+                    openInFinder(path: volume.mountPath)
                 } label: {
                     Image(systemName: "folder")
                         .padding(.vertical, 1)
@@ -76,6 +76,22 @@ struct DiskUsageBar: View {
 }
 
 extension DiskUsageBar {
+    func openInFinder(path: String) {
+        let escaped = path.replacingOccurrences(of: "\\", with: "\\\\")
+                          .replacingOccurrences(of: "\"", with: "\\\"")
+        let source = """
+        tell application "Finder"
+            activate
+            open POSIX file "\(escaped)"
+        end tell
+        """
+        var error: NSDictionary?
+        NSAppleScript(source: source)?.executeAndReturnError(&error)
+        if let error = error {
+            print("AppleScript error:", error)
+        }
+    }
+
     var percent: CGFloat {
         CGFloat(volume.usedBytes) / CGFloat(volume.totalBytes)
     }
