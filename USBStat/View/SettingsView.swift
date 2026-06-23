@@ -15,13 +15,12 @@ final class SettingsView: ObservableObject {
             do {
                 if launchAtLogin {
                     try SMAppService.mainApp.register()
-                    print("App will start with login")
                 } else {
                     try SMAppService.mainApp.unregister()
-                    print("App will no longer start with login")
                 }
             } catch {
-                print(error)
+                // Откатываем тумблер, если системе не удалось изменить статус автозапуска.
+                launchAtLogin = oldValue
             }
         }
     }

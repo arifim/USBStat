@@ -77,23 +77,16 @@ struct DiskUsageBar: View {
 
 extension DiskUsageBar {
     func openInFinder(path: String) {
-        let escaped = path.replacingOccurrences(of: "\\", with: "\\\\")
-                          .replacingOccurrences(of: "\"", with: "\\\"")
-        let source = """
-        tell application "Finder"
-            activate
-            open POSIX file "\(escaped)"
-        end tell
-        """
-        var error: NSDictionary?
-        NSAppleScript(source: source)?.executeAndReturnError(&error)
-        if let error = error {
-            print("AppleScript error:", error)
-        }
+        guard !path.isEmpty else { return }
+        let url = URL(fileURLWithPath: path)
+        // Sandbox-safe: Finder (a separate process) does the access, so this
+        // needs no file-access or apple-events entitlement.
+        NSWorkspace.shared.activateFileViewerSelecting([url])
     }
 
     var percent: CGFloat {
-        CGFloat(volume.usedBytes) / CGFloat(volume.totalBytes)
+        guard volume.totalBytes > 0 else { return 0 }
+        return CGFloat(volume.usedBytes) / CGFloat(volume.totalBytes)
     }
     
     var barColor: Color {

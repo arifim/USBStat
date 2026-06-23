@@ -8,17 +8,17 @@ import Combine
 
 @MainActor
 class USBViewModel: ObservableObject {
-    
+
     @Published var devices: [USBDevice] = []
-    @Published var errorMessage = ""
-    
+
     private let monitor = USBMonitorService()
     private let volumeService = VolumeService()
-    
+    private var refreshTimer: Timer?
+
     init() {
         start()
     }
-    
+
     func start() {
         monitor.onDevicesChanged = { [weak self] devices in
             DispatchQueue.main.async {
@@ -27,26 +27,27 @@ class USBViewModel: ObservableObject {
         }
         monitor.startMonitoring()
     }
-    
+
     func stop() {
+        stopLiveRefresh()
         monitor.stopMonitoring()
     }
-    
-    
-    func eject(_ volume: USBVolume) {
-        do {
-            try volumeService.eject(volume) { success in
-                if success {
-                    print("успешно извлечено")
-                } else {
-                    print("ошибка извлечения")
-                }
-            }
-        } catch {
-            errorMessage = "Error "
+
+    // Периодически пересчитываем занятость диска, пока popover открыт.
+    func startLiveRefresh() {
+        guard refreshTimer == nil else { return }
+        monitor.refresh()
+        refreshTimer = Timer.scheduledTimer(withTimeInterval: 3, repeats: true) { [weak self] _ in
+            self?.monitor.refresh()
         }
     }
-    
-    
-    
+
+    func stopLiveRefresh() {
+        refreshTimer?.invalidate()
+        refreshTimer = nil
+    }
+
+    func eject(_ volume: USBVolume) {
+        try? volumeService.eject(volume) { _ in }
+    }
 }

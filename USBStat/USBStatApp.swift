@@ -12,7 +12,7 @@ struct USBStatApp: App {
     }
 }
 
-class AppDelegate: NSObject, NSApplicationDelegate {
+class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     private var statusItem: NSStatusItem!
     private var popover: NSPopover!
     private let viewModel = USBViewModel()
@@ -20,9 +20,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
 
+        NotificationService.shared.requestPermission()
+
         popover = NSPopover()
         popover.contentSize = NSSize(width: 360, height: 480)
         popover.behavior = .transient
+        popover.delegate = self
         popover.contentViewController = NSHostingController(
             rootView: ContentView().environmentObject(viewModel)
         )
@@ -54,7 +57,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         } else {
             popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
             popover.contentViewController?.view.window?.makeKey()
+            viewModel.startLiveRefresh()
         }
+    }
+
+    // Срабатывает при любом закрытии popover, включая клик снаружи.
+    func popoverDidClose(_ notification: Notification) {
+        viewModel.stopLiveRefresh()
     }
 
     private func showContextMenu() {

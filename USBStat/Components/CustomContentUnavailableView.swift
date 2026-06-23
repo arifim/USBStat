@@ -26,7 +26,7 @@ struct CustomContentUnavailableView: View {
                 
             Text(description)
                 .foregroundStyle(.secondary)
-                .font(.default)
+                .font(.caption)
                 .multilineTextAlignment(.center)
         }
     }

@@ -120,7 +120,7 @@ class VolumeService {
         }
         
         try NSWorkspace.shared.unmountAndEjectDevice(at: url)
-           completion(true)
-        NotificationService.shared.sendNotification(title: "Ejected successfuly", body: volume.mountPath)
+        completion(true)
+        NotificationService.shared.sendNotification(title: "Ejected successfully", body: volume.name)
     }
 }

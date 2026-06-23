@@ -20,6 +20,10 @@ class USBMonitorService {
     
     // Callback — вызывается когда что-то изменилось
     var onDevicesChanged: (([USBDevice]) -> Void)?
+
+    // Подавляем уведомления при первичном "сливе" уже подключённых устройств,
+    // иначе при каждом запуске прилетает "Device Connected" для всего железа.
+    private var isInitialScan = true
     
     private func startVolumeMonitoring() {
         daSession = DASessionCreate(kCFAllocatorDefault)
@@ -100,9 +104,15 @@ class USBMonitorService {
         // Если не вызвать — уведомления не начнут приходить
         deviceConnected(addedIterator)
         deviceDisconnected(removedIterator)
+        isInitialScan = false
         startVolumeMonitoring()
     }
     
+    // Пересчитать тома/занятость без события подключения — для живого обновления.
+    func refresh() {
+        onDevicesChanged?(fetchUSBDevices())
+    }
+
     func stopMonitoring() {
         IOObjectRelease(addedIterator)
         IOObjectRelease(removedIterator)
@@ -126,7 +136,7 @@ class USBMonitorService {
             // Fetching USB device name to display in notification
             var properties: Unmanaged<CFMutableDictionary>?
             IORegistryEntryCreateCFProperties(device, &properties, kCFAllocatorDefault, 0)
-            if let dict = properties?.takeRetainedValue() as? [String: Any] {
+            if !isInitialScan, let dict = properties?.takeRetainedValue() as? [String: Any] {
                 let name = dict[kUSBProductString] as? String ?? "USB Device"
                 NotificationService.shared.sendNotification(title: "Device Connected", body: name)
             }
@@ -146,7 +156,7 @@ class USBMonitorService {
         while device != 0 {
             var properties: Unmanaged<CFMutableDictionary>?
             IORegistryEntryCreateCFProperties(device, &properties, kCFAllocatorDefault, 0)
-            if let dict = properties?.takeRetainedValue() as? [String: Any] {
+            if !isInitialScan, let dict = properties?.takeRetainedValue() as? [String: Any] {
                 let name = dict[kUSBProductString] as? String ?? "USB Device"
                 NotificationService.shared.sendNotification(title: "Device Disconnected", body: name)
             }
